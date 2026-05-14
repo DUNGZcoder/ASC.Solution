@@ -1,0 +1,79 @@
+﻿@using Microsoft.AspNetCore.Http
+@using ASC.Utilities
+@model ASC.Web.Models.NavigationMenu
+@inject IHttpContextAccessor UserHttpContext
+
+@{
+    var currentUser = UserHttpContext.HttpContext.User.GetCurrentUserDetails();
+
+    string GetLinkId(string displayName)
+    {
+        if (displayName == "Logout")
+        {
+            return "ancrLogout";
+        }
+
+        if (displayName == "Reset Password")
+        {
+            return "ancrResetPassword";
+        }
+
+        return string.Format("anc{0}", displayName.Replace(" ", ""));
+    }
+}
+
+@foreach (var menuItem in Model.MenuItems.OrderBy(p => p.Sequence).ToList())
+{
+    if (currentUser.Roles.Intersect(menuItem.UserRoles).Any())
+    {
+        @if (menuItem.IsNested)
+        {
+            <li>
+
+                <div class="collapsible-header">
+                    <i class="material-icons">@menuItem.MaterialIcon</i>
+                    @menuItem.DisplayName
+                </div>
+
+                <div class="collapsible-body">
+
+                    <ul>
+
+                        @foreach (var subMenuItem in menuItem.NestedItems.OrderBy(p => p.Sequence).ToList())
+                        {
+                            if (currentUser.Roles.Intersect(subMenuItem.UserRoles).Any())
+                            {
+                                <li>
+
+                                    <a href="@subMenuItem.Link"
+                                       id="@GetLinkId(subMenuItem.DisplayName)">
+
+                                        <i class="material-icons">
+                                            @subMenuItem.MaterialIcon
+                                        </i>
+
+                                        @subMenuItem.DisplayName
+
+                                    </a>
+
+                                </li>
+                            }
+                        }
+
+                    </ul>
+
+                </div>
+
+            </li>
+        }
+        else
+        {
+            <li>
+                <a href="@menuItem.Link" id="@GetLinkId(menuItem.DisplayName)" class="collapsible-header">
+                    <i class="material-icons">@menuItem.MaterialIcon</i>
+                    @menuItem.DisplayName
+                </a>
+            </li>
+        }
+    }
+}

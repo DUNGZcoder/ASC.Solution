@@ -1,0 +1,83 @@
+﻿@page
+@model ASC.Web.Areas.Identity.Pages.Account.ExternalLoginModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+
+    <div class="row">
+
+        <div class="col s12 m6 offset-m3">
+
+            <h4 id="external-login-title">
+                Associate your @Model.ProviderDisplayName account.
+            </h4>
+
+            <div class="divider"></div>
+
+            <p id="external-login-description" class="text-info">
+                You've successfully authenticated with
+                <strong>@Model.ProviderDisplayName</strong>.
+                Please enter an email address for this site below
+                and click the Register button to finish logging in.
+            </p>
+
+            <form asp-page-handler="Confirmation"
+                  asp-route-returnUrl="@Model.ReturnUrl"
+                  method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger"
+                     role="alert">
+                </div>
+
+                <div class="row">
+
+                    <div class="input-field col s12">
+
+                        <input asp-for="Input.Email"
+                               type="email"
+                               class="validate"
+                               autocomplete="email"
+                               placeholder="Please enter your email." />
+
+                        <label asp-for="Input.Email">
+                            Email
+                        </label>
+
+                        <span asp-validation-for="Input.Email"
+                              class="helper-text text-danger">
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="row center">
+
+                    <button type="submit"
+                            class="btn waves-effect waves-light">
+
+                        Register
+
+                        <i class="material-icons right">
+                            send
+                        </i>
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,31 @@
+﻿using ASC.Web.Models;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
+
+namespace ASC.Web.Data
+{
+    public class NavigationCacheOperations : INavigationCacheOperations
+    {
+        private readonly IDistributedCache _cache;
+        private readonly string NavigationCacheName = "NavigationCache";
+
+        public NavigationCacheOperations(IDistributedCache cache)
+        {
+            _cache = cache;
+        }
+
+        public async Task CreateNavigationCacheAsync()
+        {
+            await _cache.SetStringAsync(
+                NavigationCacheName,
+                File.ReadAllText("Navigation/Navigation.json"));
+        }
+
+        public async Task<NavigationMenu> GetNavigationCacheAsync()
+        {
+            var json = await _cache.GetStringAsync(NavigationCacheName);
+
+            return JsonConvert.DeserializeObject<NavigationMenu>(json);
+        }
+    }
+}

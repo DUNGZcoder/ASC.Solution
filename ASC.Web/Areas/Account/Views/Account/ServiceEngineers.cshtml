@@ -1,0 +1,215 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model ASC.Web.Areas.Account.Models.ServiceEngineerViewModel
+@inject UserManager<IdentityUser> UserManager
+
+@{
+    Layout = "_SecureLayout";
+}
+
+<div class="service-engineer-page">
+
+    <div class="card">
+        <div class="section white-text padding-left-20px blue-grey darken-1">
+            <h5>User</h5>
+        </div>
+
+        <div class="card-content">
+            @if (Model.ServiceEngineers != null && Model.ServiceEngineers.Any())
+            {
+                <table class="striped highlight responsive-table centered" id="tblServiceEngineers">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Is Active</th>
+                            <th>Edit User</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var user in Model.ServiceEngineers)
+                        {
+                            var identity = await UserManager.GetClaimsAsync(user);
+                            var isActive = identity.SingleOrDefault(p => p.Type == "IsActive");
+                            var activeValue = isActive != null && Boolean.Parse(isActive.Value);
+
+                            <tr>
+                                <td>@user.Email</td>
+                                <td>@user.UserName</td>
+                                <td>@activeValue.ToString()</td>
+
+                                <td>
+                                    @if (activeValue)
+                                    {
+                                        <i class="material-icons green-text active-icon">check_circle</i>
+                                    }
+                                    else
+                                    {
+                                        <i class="material-icons red-text active-icon">cancel</i>
+                                    }
+                                </td>
+
+                                <td>
+                                    <i class="material-icons edit cursor-hand blue-grey-text text-darken-2">
+                                        mode_edit
+                                    </i>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="card blue-grey lighten-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">No Service Engineers</span>
+                        <p>No Service Engineers found, please add a Service Engineer to system.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section white-text padding-left-20px blue-grey darken-1">
+            <h5>Service Engineer Details</h5>
+        </div>
+
+        <div class="card-content">
+            <form asp-controller="Account"
+                  asp-action="ServiceEngineers"
+                  method="post"
+                  id="frmUser">
+
+                <input type="hidden" asp-for="Registration.IsEdit" />
+                <input type="hidden" asp-for="Registration.Email" />
+
+                <div class="row">
+                    <div class="input-field col s12 m6 l4">
+                        <input asp-for="Registration.Email" id="Input_Registration_Email" />
+                        <label asp-for="Registration.Email"></label>
+                    </div>
+
+                    <div class="input-field col s12 m6 l4">
+                        <input asp-for="Registration.UserName" class="validate" />
+                        <label asp-for="Registration.UserName"></label>
+                    </div>
+
+                    <div class="input-field col s12 m6 l4">
+                        <input asp-for="Registration.Password" class="validate" />
+                        <label asp-for="Registration.Password"></label>
+                    </div>
+
+                    <div class="input-field col s12 m6 l4">
+                        <input asp-for="Registration.ConfirmPassword" class="validate" />
+                        <label asp-for="Registration.ConfirmPassword"></label>
+                    </div>
+
+                    <div class="input-field col s12 m6 l4">
+                        <div class="switch switch-field">
+                            <label>
+                                Is Active
+                                <input asp-for="Registration.IsActive" class="validate" />
+                                <span class="lever"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-field col s12 m6 l4 right-align action-buttons">
+                        <button class="btn waves-effect waves-light blue-grey darken-1 btnSubmit"
+                                type="submit"
+                                name="action">
+                            Create
+                            <i class="material-icons right">send</i>
+                        </button>
+
+                        <button class="btn waves-effect waves-light reset red lighten-1"
+                                type="button"
+                                name="action">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col s12 right-align text-danger" asp-validation-summary="All"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            if ($('#tblServiceEngineers').length) {
+                var table = $('#tblServiceEngineers').DataTable({
+                    pageLength: 3,
+                    lengthMenu: [[3, 5, 10, -1], [3, 5, 10, 'All']]
+                });
+
+                // Hide Status column: Email = 0, Name = 1, Status = 2
+                var statusColumn = table.column(2);
+                statusColumn.visible(false);
+
+                $('#tblServiceEngineers').css("width", "100%");
+                $('select[name="tblServiceEngineers_length"]').formSelect();
+            }
+
+            // Reset form
+            $(document).on("click", ".reset", function () {
+                $('#frmUser')[0].reset();
+
+                $('#Input_Registration_Email').removeAttr('disabled');
+                $('#Registration_Email').val('');
+                $('#Registration_IsEdit').val('False');
+                $('#Registration_IsActive').prop('checked', false);
+
+                $('.btnSubmit').html('CREATE <i class="material-icons right">send</i>');
+
+                M.updateTextFields();
+            });
+
+            // Click edit icon
+            $(document).on("click", ".edit", function () {
+
+                var table = $('#tblServiceEngineers').DataTable();
+
+                var user = table
+                    .row($(this).closest('tr'))
+                    .data();
+
+                console.log(user);
+
+                $('#Registration_IsEdit').val('True');
+
+                $('#Input_Registration_Email').val(user[0].trim());
+                $('#Registration_Email').val(user[0].trim());
+
+                $('#Input_Registration_Email')
+                    .attr('disabled', 'disabled');
+
+                $('#Registration_UserName').val(user[1]);
+
+                $('#Registration_IsActive').prop(
+                    'checked',
+                    user[2] === 'True'
+                );
+
+                $('.btnSubmit').html('SAVE <i class="material-icons right">save</i>');
+
+                M.updateTextFields();
+            });
+
+            // Before submit
+            $(document).on("click", ".btnSubmit", function () {
+                $('#Registration_Email').val($('#Input_Registration_Email').val());
+                M.updateTextFields();
+            });
+
+        });
+    </script>
+}

@@ -1,0 +1,188 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+@model ASC.Web.Areas.Account.Models.CustomerViewModel
+@inject UserManager<IdentityUser> userManager
+
+@{
+    Layout = "_SecureLayout";
+}
+
+<div class="service-engineer-page">
+    <div class="card">
+        <div class="section white-text padding-left-20px blue-grey darken-1">
+            <h5>Users</h5>
+        </div>
+
+        <div class="card-content">
+            @if (Model.Customers != null && Model.Customers.Any())
+            {
+                <table class="striped highlight responsive-table centered" id="tblCustomers">
+                    <thead>
+                        <tr>
+                            <th data-field="Email">Email</th>
+                            <th data-field="IsActive">Is Active</th>
+                            <th data-field="Actions">Edit User</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var user in Model.Customers)
+                        {
+                            var identity = await userManager.GetClaimsAsync(user);
+                            var isActiveClaim = identity.SingleOrDefault(p => p.Type == "IsActive");
+                            var isActive = isActiveClaim != null && Boolean.Parse(isActiveClaim.Value);
+
+                            <tr>
+                                <td>@user.Email</td>
+                                <td>@isActive.ToString()</td>
+                                <td>
+                                    @if (isActive)
+                                    {
+                                        <i class="material-icons green-text active-icon">check_circle</i>
+                                    }
+                                    else
+                                    {
+                                        <i class="material-icons red-text active-icon">cancel</i>
+                                    }
+                                </td>
+                                <td>
+                                    <i class="material-icons edit cursor-hand blue-grey-text text-darken-2">
+                                        mode_edit
+                                    </i>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="card blue-grey lighten-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">No Customers</span>
+                        <p>No customer accounts found.</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section white-text padding-left-20px blue-grey darken-1">
+            <h5>Customer Details</h5>
+        </div>
+
+        <div class="card-content">
+            <form asp-controller="Account"
+                  asp-action="Customers"
+                  method="post"
+                  id="fromUser">
+
+                <input type="hidden" asp-for="Registration.IsEdit" />
+                <input type="hidden" asp-for="Registration.Email" />
+
+                <div class="row">
+                    <div class="input-field col s12 m8">
+                        <input asp-for="Registration.Email"
+                               id="Input_Registration_Email" />
+                        <label asp-for="Registration.Email"></label>
+                    </div>
+
+                    <div class="input-field col s12 m2 switch-field">
+                        <div class="switch">
+                            <label>
+                                Is Active
+                                <input asp-for="Registration.IsActive"
+                                       class="validate" />
+                                <span class="lever"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="input-field col s12 m2 right-align action-buttons">
+                        <button class="btn waves-effect waves-light blue-grey darken-1 btnSubmit"
+                                type="submit">
+                            Save
+                            <i class="material-icons right">send</i>
+                        </button>
+
+                        <button class="btn waves-effect waves-light reset red lighten-1"
+                                type="button">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col s12 red-text right-align"
+                         asp-validation-summary="All">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            if ($('#tblCustomers').length) {
+                var table = $('#tblCustomers').DataTable({
+                    pageLength: 3,
+                    lengthMenu: [[3, 5, 10, -1], [3, 5, 10, 'All']]
+                });
+
+                $('#tblCustomers').css("width", "100%");
+                $('select[name="tblCustomers_length"]').formSelect();
+
+                var isActiveColumn = table.column(1);
+                isActiveColumn.visible(false);
+            }
+
+            $('.btnSubmit').attr('disabled', 'disabled');
+
+            $(document).on("click", ".reset", function () {
+                $('#fromUser')[0].reset();
+
+                $('#Input_Registration_Email').removeAttr('disabled');
+                $('#Registration_IsEdit').val('False');
+                $('#Registration_Email').val('');
+                $('#Registration_IsActive').prop('checked', false);
+
+                $('.btnSubmit').attr('disabled', 'disabled');
+
+                M.updateTextFields();
+            });
+
+            $(document).on("click", ".edit", function () {
+                var user = $('#tblCustomers')
+                    .DataTable()
+                    .row($(this).parents('tr'))
+                    .data();
+
+                $('#Registration_IsEdit').val('True');
+
+                $('#Input_Registration_Email').val(user[0]);
+                $('#Registration_Email').val(user[0]);
+
+                $('#Input_Registration_Email').attr('disabled', 'disabled');
+
+                $('#Registration_IsActive').prop(
+                    'checked',
+                    user[1] === 'True'
+                );
+
+                $('.btnSubmit').removeAttr('disabled');
+
+                M.updateTextFields();
+            });
+
+            $(document).on("click", ".btnSubmit", function () {
+                $('#Registration_Email').val($('#Input_Registration_Email').val());
+                M.updateTextFields();
+            });
+
+        });
+    </script>
+}
